@@ -1,14 +1,16 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
+// src/app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth/next";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import GitHubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
+import { RequestInternal, User } from "next-auth";
 
 const prisma = new PrismaClient();
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
@@ -17,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials: Record<"email" | "password", string> | undefined, req: Pick<RequestInternal, "query" | "body" | "headers" | "method">): Promise<User | null> {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -30,10 +32,8 @@ export const authOptions: NextAuthOptions = {
           const isValid = await bcrypt.compare(credentials.password, user.password);
           if (isValid) {
             return {
-              id: user.id,
-              email: user.email,
-              name: user.name,
-              image: user.image,
+              ...user,
+              id: user.id.toString(),
             };
           }
         }
@@ -51,22 +51,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.sub!;
+    async session({ session, token }: { session: any, token: any }) {
+      if (token?.id) {
+        session.user.id = token.id;
       }
       return session;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: any, user: any }) {
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
       }
       return token;
     },
   },
   pages: {
-    signIn: "/signin",
-    error: "/error",
+    signIn: "/signin", 
+    error: "/error", 
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

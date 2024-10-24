@@ -18,6 +18,15 @@ export async function POST(req: NextRequest) {
     signupSchema.parse(body);
 
     const { email, password, firstname, lastname } = body;
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      return NextResponse.json({ error: "Email already exists." }, { status: 400 });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = await prisma.user.create({
@@ -28,6 +37,7 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
       },
     });
+
     return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {

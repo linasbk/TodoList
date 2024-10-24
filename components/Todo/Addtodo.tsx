@@ -1,36 +1,43 @@
-import React, { PureComponent } from "react";
+"use client";
+import React from "react";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import TodoList from "./TodoList";
-export class AddTodo extends PureComponent {
-  state = {
-    tasks: [],
-    newTask: "",
+import Createtodo from "./Createtodo";
+import { useState } from "react";
+import { Button } from "../ui/button";
+import { signOut } from "next-auth/react"
+const AddTodo: React.FC = () => {
+  const [newTask, setNewTask] = useState("");
+  const [newDescription, setNewDescription] = useState("");
+  const [isDialogOpen, setDialogOpen] = useState(false);
+  const [isLoading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const addTask = async () => {
+    if (!newTask) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/todos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTask, description: newDescription }),
+      });
+
+      if (!response.ok) throw new Error('Failed to add task');
+      const newTodo = await response.json();
+      setNewTask('');
+      setNewDescription('');
+      setDialogOpen(false);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to add task');
+    } finally {
+      setLoading(false);
+    }
   };
-
-  addTask = () => {
-    const { newTask, tasks } = this.state;
-    if (!newTask) return; // Prevent adding empty tasks
-
-    const newTaskObj = {
-      id: Date.now(), // Using timestamp as a unique ID
-      task: newTask,
-      completed: false,
-    };
-
-    this.setState({
-      tasks: [...tasks, newTaskObj],
-      newTask: "", // Clear the input
-    });
-  };
-
-  handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newTask: e.target.value });
-  };
-
-  render() {
-    const { tasks, newTask } = this.state;
 
     return (
       <div className="relative min-h-screen">
@@ -41,7 +48,7 @@ export class AddTodo extends PureComponent {
             backgroundSize: "cover",
             backgroundPosition: "center",
           }}
-        ></div>
+        />
         <div className="flex items-center justify-center flex-grow">
           <div className="absolute top-20 left-0 right-0 bottom-0 flex justify-center">
             <div className="relative p-8 h-full bg-white w-[80%] min-w-96 rounded shadow-2xl">
@@ -52,29 +59,38 @@ export class AddTodo extends PureComponent {
                 height={100}
                 className="absolute top-[-4em] transform -translate-x-2/5 w-32"
               />
+              <Button
+                onClick={() => signOut()}
+                className="absolute top-[-4em] transform right-0 w-32 bg-white hover:bg-[#c7c2e3] text-[#6e54b5]">
+                Sign Out
+              </Button>
               <div className="flex justify-between gap-3 items-center">
-                <Input
-                  id="todo"
-                  type="text"
-                  placeholder="Enter your Todo"
-                  value={newTask}
-                  onChange={this.handleInputChange}
-                  className="p-2 border rounded w-full"
-                />
-                <Button
-                  className="bg-[#6e54b5] hover:bg-[#7e74b8] text-white"
-                  onClick={this.addTask}
-                >
-                  Add Todo
-                </Button>
+              <Input
+                id="todo"
+                type="text"
+                placeholder="Enter your Todo"
+                value={newTask}
+                onChange={(e) => setNewTask(e.target.value)}
+                className="p-2 border rounded w-full"
+              />
+                <Createtodo 
+                isOpen={isDialogOpen}
+                setIsOpen={setDialogOpen}
+                addTask={addTask}
+                newTask={newTask}
+                newDescription={newDescription}
+                handleInputChange={(e) => {
+                  if (e.target.name === "newTask") setNewTask(e.target.value);
+                  else setNewDescription(e.target.value);
+                }}
+              />
               </div>
-              <TodoList tasks={tasks} setTasks={this.setState.bind(this)} />
+              <TodoList />
             </div>
           </div>
         </div>
       </div>
     );
-  }
 }
 
 export default AddTodo;

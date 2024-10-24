@@ -32,13 +32,15 @@ const SignUp = () => {
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [backendError, setBackendError] = useState<string | null>(null);
   const router = useRouter();
 
   const handleSignup = async () => {
     try {
       userSchema.parse({ email, password, firstname, lastname });
       setErrors({});
-  
+      setBackendError(null); // Reset backend error
+
       const response = await fetch("/api/auth", {
         method: "POST",
         headers: {
@@ -46,30 +48,29 @@ const SignUp = () => {
         },
         body: JSON.stringify({ email, password, firstname, lastname }),
       });
-  
+
       if (response.ok) {
         router.push("/signIn");
       } else {
-        alert("Invalid credentials");
+        const errorData = await response.json();
+        setBackendError(errorData.error || "An error occurred");
       }
     } catch (e) {
       if (e instanceof z.ZodError) {
         const fieldErrors = e.flatten().fieldErrors;
         const formattedErrors: { [key: string]: string } = {};
-  
+
         for (const key in fieldErrors) {
           const errorsArray = fieldErrors[key];
           if (Array.isArray(errorsArray) && errorsArray.length > 0) {
             formattedErrors[key] = errorsArray[0];
           }
         }
-  
+
         setErrors(formattedErrors);
       }
     }
   };
-  
-  
 
   return (
     <div className="flex items-center justify-center bg-[#554f69] min-h-screen">
@@ -101,7 +102,7 @@ const SignUp = () => {
                 onChange={(e) => setLastname(e.target.value)}
                 placeholder="Last Name"
                 className="border-2 border-[#8e71e1]"
-                />
+              />
             </div>
             <div className="flex space-x-4">
               {errors.firstname && <span className="text-red-600">{errors.firstname}</span>}
@@ -130,6 +131,7 @@ const SignUp = () => {
               placeholder="Confirm your Password"
               className="border-2 border-[#8e71e1]"
             />
+            {backendError && <span className="text-red-600">{backendError}</span>}
             <Button
               type="button"
               onClick={handleSignup}

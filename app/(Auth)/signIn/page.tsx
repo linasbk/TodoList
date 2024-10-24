@@ -1,4 +1,5 @@
 "use client";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,33 +14,34 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useAuth } from '../../context/AuthContext'
 
-const SignInPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const SignInPage: React.FC = () => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [backendError, setBackendError] = useState<string | null>(null);
   const router = useRouter();
-  const { login } = useAuth();
 
-  const handleSignin = async () => {
+  const handleSignin = async (): Promise<void> => {
+    setBackendError(null);
+
     const response = await signIn("credentials", {
       email,
       password,
       redirect: false,
     });
-    if (response?.ok) {
-      login(response.user);
+
+    if (response?.error) {
+      setBackendError(response.error);
+    } else if (response?.ok) {
       router.push("/");
-    } else {
-      alert("Invalid credentials");
     }
   };
 
   return (
-    <div className="flex items-center bg-[#554f69] justify-center min-h-screen">
+    <div className="flex items-center justify-center min-h-screen bg-[#554f69]">
       <Card className="mx-auto max-w-sm">
-        <CardHeader className="space-y-1 gap-2">
-          <CardTitle className="text-[#2b2738] text-4xl">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-4xl text-[#2b2738]">
             Sign <span className="text-[#6e54b5]">In</span>
           </CardTitle>
           <CardDescription className="text-sm text-gray-400">
@@ -65,8 +67,11 @@ const SignInPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-80 border-2 border-[#8e71e1]"
             />
+            {backendError && (
+              <span className="text-red-600">{backendError}</span>
+            )}
             <Button
-              type="submit"
+              type="button"
               onClick={handleSignin}
               className="w-full bg-[#6e54b5] hover:bg-[#7e74b8] text-white"
             >
@@ -78,14 +83,20 @@ const SignInPage = () => {
               <hr className="flex-grow border-t border-[#8e71e1]" />
             </div>
             <div className="flex justify-around mt-2 gap-2">
-              <Button className="p-5 w-full border-2 border-[#8e71e1] bg-white text-[#6e5da6] font-bold hover:bg-[#b8b1df77]">
-                <Image src="/google.svg" alt="" width={20} height={20} />
-                Google
-              </Button>
-              <Button className="p-5 w-full border-2 border-[#8e71e1] bg-white text-[#6e5da6] font-bold hover:bg-[#b8b1df77]">
-                <Image src="/github.svg" alt="" width={20} height={20} />
-                GitHub
-              </Button>
+              {["google", "github"].map((provider) => (
+                <Button
+                  key={provider}
+                  className="p-5 w-full border-2 border-[#8e71e1] bg-white text-[#6e5da6] font-bold hover:bg-[#b8b1df77]"
+                >
+                  <Image
+                    src={`/${provider}.svg`}
+                    alt={provider}
+                    width={20}
+                    height={20}
+                  />
+                  {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                </Button>
+              ))}
             </div>
           </div>
         </CardContent>

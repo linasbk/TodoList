@@ -1,41 +1,47 @@
-"use client";
-import { createContext, useContext, useState, ReactNode } from 'react';
+// "use client";
+// import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+// import { useSession } from 'next-auth/react';
 
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
+// interface User {
+//   id: string;
+//   firstName?: string;
+//   lastName?: string;
+//   email: string;
+// }
 
-interface AuthContextType {
-  user: User | null;
-  login: (userData: User) => void;
-  logout: () => void;
-}
+// interface AuthContextType {
+//   isAuthenticated: boolean;
+//   loading: boolean;
+// }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+// export const AuthProvider = ({ children }: { children: ReactNode }) => {
+//   const { data: session, status } = useSession();
+//   const [loading, setLoading] = useState(true);
 
-  const login = (userData: User) => {
-    setUser(userData);
-  };
+//   useEffect(() => {
+//     if (status === 'loading') {
+//       setLoading(true);
+//     } else {
+//       setLoading(false);
+//     }
+//   }, [session, status]);
 
-  const logout = () => {
-    setUser(null);
-  };
+//   return (
+//     <AuthContext.Provider 
+//       value={{ 
+//         isAuthenticated: !!session,
+//         loading
+//       }}
+//     >
+//       {children}
+//     </AuthContext.Provider>
+//   );
+// };
 
-  return (
-    <AuthContext.Provider value={{ user, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
-};
+// export const useAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) throw new Error('useAuth must be used within an AuthProvider');
+//   return context;
+// };
