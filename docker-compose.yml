@@ -1,20 +1,22 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://postgres:password@db:5432/nextjs_db
-      - NEXTAUTH_SECRET=\${NEXTAUTH_SECRET}
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - .:/app
-    command: sh -c "npx prisma migrate deploy && npm run build && npm start"
+  # app:
+  #   build: .
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - DATABASE_URL=postgresql://postgres:password@db:5432/nextjs_db
+  #     - GOOGLE_CLIENT_ID=\${GOOGLE_CLIENT_ID}
+  #     - GOOGLE_CLIENT_SECRET=\${GOOGLE_CLIENT_SECRET}
+  #     - NEXTAUTH_SECRET=\${NEXTAUTH_SECRET}
+  #   depends_on:
+  #     db:
+  #       condition: service_healthy
+  #   volumes:
+  #     - .:/app
+  #   command: npm run dev
 
   db:
     image: postgres:14
