@@ -7,9 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faEdit, faCircle, faCheckCircle, faCube } from "@fortawesome/free-solid-svg-icons"; 
+import { faTrash, faEdit, faCheckCircle, faCube } from "@fortawesome/free-solid-svg-icons"; 
 // Define the Todo type
 type Todo = {
   id: number;

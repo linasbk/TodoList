@@ -1,18 +1,25 @@
 "use client";
 import { createContext, useContext, useState, ReactNode } from 'react';
 
+interface User {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
 interface AuthContextType {
-  user: any;
-  login: (userData: any) => void;
+  user: User | null;
+  login: (userData: User) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
 
-  const login = (userData: any) => {
+  const login = (userData: User) => {
     setUser(userData);
   };
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +11,66 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { z } from "zod";
 
-const SignUp = async () => {
+const userSchema = z.object({
+  firstname: z.string().min(1).max(20, "First name is too long"),
+  lastname: z.string().min(1).max(20, "Last name is too long"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/[\W_]/, "Password must contain at least one special character"),
+});
+
+const SignUp = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const router = useRouter();
+
+  const handleSignup = async () => {
+    try {
+      userSchema.parse({ email, password, firstname, lastname });
+      setErrors({});
+  
+      const response = await fetch("/api/auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password, firstname, lastname }),
+      });
+  
+      if (response.ok) {
+        router.push("/signIn");
+      } else {
+        alert("Invalid credentials");
+      }
+    } catch (e) {
+      if (e instanceof z.ZodError) {
+        const fieldErrors = e.flatten().fieldErrors;
+        const formattedErrors: { [key: string]: string } = {};
+  
+        for (const key in fieldErrors) {
+          const errorsArray = fieldErrors[key];
+          if (Array.isArray(errorsArray) && errorsArray.length > 0) {
+            formattedErrors[key] = errorsArray[0];
+          }
+        }
+  
+        setErrors(formattedErrors);
+      }
+    }
+  };
+  
+  
+
   return (
     <div className="flex items-center justify-center bg-[#554f69] min-h-screen">
       <Card className="mx-auto max-w-sm">
@@ -31,36 +91,48 @@ const SignUp = async () => {
               <Input
                 id="firstname"
                 type="text"
+                onChange={(e) => setFirstname(e.target.value)}
                 placeholder="First Name"
                 className="border-2 border-[#8e71e1] ring-0 focus:ring-0"
               />
               <Input
                 id="lastname"
                 type="text"
+                onChange={(e) => setLastname(e.target.value)}
                 placeholder="Last Name"
                 className="border-2 border-[#8e71e1]"
-              />
+                />
+            </div>
+            <div className="flex space-x-4">
+              {errors.firstname && <span className="text-red-600">{errors.firstname}</span>}
+              {errors.lastname && <span className="text-red-600">{errors.lastname}</span>}
             </div>
             <Input
               id="email"
               type="email"
+              onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your Email"
               className="border-2 border-[#8e71e1]"
             />
+            {errors.email && <span className="text-red-600">{errors.email}</span>}
             <Input
               id="password"
               type="password"
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your Password"
               className="border-2 border-[#8e71e1]"
             />
+            {errors.password && <span className="text-red-600">{errors.password}</span>}
             <Input
               id="confirm-password"
               type="password"
+              onChange={(e) => setPassword(e.target.value)}
               placeholder="Confirm your Password"
               className="border-2 border-[#8e71e1]"
             />
             <Button
-              type="submit"
+              type="button"
+              onClick={handleSignup}
               className="w-full bg-[#6e54b5] hover:bg-[#7e74b8] text-white"
             >
               Sign Up

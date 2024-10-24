@@ -1,3 +1,4 @@
+"use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,8 +10,31 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useAuth } from '../../context/AuthContext'
 
 const SignInPage = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
+  const { login } = useAuth();
+
+  const handleSignin = async () => {
+    const response = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+    if (response?.ok) {
+      login(response.user);
+      router.push("/");
+    } else {
+      alert("Invalid credentials");
+    }
+  };
+
   return (
     <div className="flex items-center bg-[#554f69] justify-center min-h-screen">
       <Card className="mx-auto max-w-sm">
@@ -19,7 +43,7 @@ const SignInPage = () => {
             Sign <span className="text-[#6e54b5]">In</span>
           </CardTitle>
           <CardDescription className="text-sm text-gray-400">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/signUp">
               <span className="text-[#6e54b5] underline">Sign up</span>
             </Link>
@@ -31,16 +55,19 @@ const SignInPage = () => {
               id="email"
               type="email"
               placeholder="Enter your Email"
+              onChange={(e) => setEmail(e.target.value)}
               className="w-80 border-2 border-[#8e71e1]"
             />
             <Input
               id="password"
               type="password"
               placeholder="Enter your Password"
+              onChange={(e) => setPassword(e.target.value)}
               className="w-80 border-2 border-[#8e71e1]"
             />
             <Button
               type="submit"
+              onClick={handleSignin}
               className="w-full bg-[#6e54b5] hover:bg-[#7e74b8] text-white"
             >
               Sign In
