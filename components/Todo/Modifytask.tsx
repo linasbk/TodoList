@@ -1,67 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import React, { useState } from 'react';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface CreatetodoProps {
+interface ModifyTaskProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
-    setRefresh: (refresh: boolean) => void;
-    newTask: string;
+    task: { id: number; title: string; description: string; category: string; completed: boolean };
+    modifyTask: (id: number, updatedTask: { title: string; description: string; category: string; completed: boolean }) => Promise<void>;
 }
 
-const Createtodo: React.FC<CreatetodoProps> = ({ isOpen, setIsOpen, setRefresh, newTask }) => {
-    const [title, setTitle] = useState<string>(newTask);
-    const [description, setDescription] = useState<string>('');
-    const [category, setCategory] = useState<string>('Personal');
+const ModifyTask: React.FC<ModifyTaskProps> = ({ isOpen, setIsOpen, task, modifyTask }) => {
+    const [title, setTitle] = useState<string>(task.title);
+    const [description, setDescription] = useState<string>(task.description);
+    const [category, setCategory] = useState<string>(task.category);
+    const [completed, setCompleted] = useState<boolean>(task.completed);
     const [backendError, setBackendError] = useState<string | null>(null);
-    
-    useEffect(() => {
-        setTitle(newTask);
-    }, [isOpen, newTask]);
 
-    const handleAddTask = async () => {
-        setBackendError(null);
+    const handleModifyTask = async () => {
         if (!title.trim()) {
             setBackendError('Title is required');
             return;
         }
-
-        const taskData = { title, description, category, completed: false };
-
-        try {
-            const response = await fetch('/api/todos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(taskData),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                setBackendError(errorData.error || 'Failed to add task');
-                return;
-            }
-            setRefresh(true);
-            setTitle('');
-            setDescription('');
-            setCategory('Personal');
-            setIsOpen(false);
-        } catch (error) {
-            console.error(error);
-            setBackendError('Failed to add task');
-        }
+        const updatedTask = {
+            title,
+            description,
+            category,
+            completed,
+        };
+        await modifyTask(task.id, updatedTask);
+        setIsOpen(false);
     };
 
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button className="bg-[#6e54b5] hover:bg-[#7e74b8] text-white">
-                    Add Task
-                </Button>
-            </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle className='text-[#2b2738]'>Create New Task</DialogTitle>
+                    <DialogTitle className='text-[#2b2738]'>Modify Task</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid gap-2">
@@ -98,14 +79,24 @@ const Createtodo: React.FC<CreatetodoProps> = ({ isOpen, setIsOpen, setRefresh, 
                             <option value="Activities">Activities</option>
                         </select>
                     </div>
+                    <div className="flex items-center">
+                        <input
+                            type="checkbox"
+                            id="completed"
+                            checked={completed}
+                            onChange={() => setCompleted(!completed)}
+                            className="mr-2"
+                        />
+                        <label htmlFor="completed">Mark as completed</label>
+                    </div>
                     {backendError && <span className="text-red-600">{backendError}</span>}
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
                         Cancel
                     </Button>
-                    <Button type="button" onClick={handleAddTask} className="bg-[#6e54b5] hover:bg-[#7e74b8] text-white">
-                        Add Task
+                    <Button type="button" onClick={handleModifyTask} className="bg-[#6e54b5] hover:bg-[#7e74b8] text-white">
+                        Modify Task
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -113,4 +104,4 @@ const Createtodo: React.FC<CreatetodoProps> = ({ isOpen, setIsOpen, setRefresh, 
     );
 };
 
-export default Createtodo;
+export default ModifyTask;

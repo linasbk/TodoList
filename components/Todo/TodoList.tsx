@@ -1,11 +1,10 @@
-"use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -14,106 +13,98 @@ import {
   faCheckCircle,
   faCircleXmark,
 } from "@fortawesome/free-solid-svg-icons";
-import { useState, useEffect } from "react";
-
+import axios from "axios";
+import ModifyTask from "./Modifytask";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 type Task = {
   id: number;
-  task: string;
+  title: string;
+  description: string;
   completed: boolean;
   category: string;
 };
 
-// Add manual tasks here
-const initialTasks: Task[] = [
-  { id: 1, task: "Finish project report", completed: false, category: "Work" },
-  { id: 2, task: "Buy groceries", completed: false, category: "Personal" },
-  {
-    id: 3,
-    task: "Schedule doctor appointment",
-    completed: false,
-    category: "Urgent",
-  },
-  { id: 4, task: "Call mom", completed: true, category: "Personal" },
-];
+interface TodoListProps {
+  refesh: boolean;
+  setRefresh: (refresh: boolean) => void;
+}
 
-const DropIndicator = ({ beforeId }: { beforeId: number }) => {
-  return (
-    <div
-      data-before-id={beforeId || "-1"}
-      className="drop-indicator"
-    ></div>
-  );
-};
-
-const TodoList: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+const TodoList: React.FC<TodoListProps> = ({ refesh, setRefresh }) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+  const [isModifyDialogOpen, setModifyDialogOpen] = useState(false);
+  const [currentTask, setCurrentTask] = useState<Task | null>(null);
 
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await fetch("/api/todos");
-        if (!response.ok) throw new Error("Failed to fetch tasks");
-        const data = await response.json();
-        setTasks(data);
-      } catch (error) {
-        console.error(error);
-      }
-    };
     fetchTasks();
-  }, []);
+    setRefresh(false);
+  }, [refesh, setRefresh]);
+
+  const fetchTasks = async () => {
+    try {
+      const response = await axios.get("/api/todos");
+      setTasks(response.data);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+    }
+  };
 
   const deleteTask = async (id: number) => {
-    const response = await fetch(`/api/todos?id=${id}`, { method: "DELETE" });
-    if (response.ok) {
-      setTasks((prev) => prev.filter((task) => task.id !== id));
-    }
+    await fetch(`/api/todos/${id}`, { method: "DELETE" });
+    setTasks((prev) => prev.filter((task) => task.id !== id));
+    setRefresh(true);
   };
 
   const toggleCompletion = async (id: number) => {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
 
-    const response = await fetch("/api/todos", {
+    await fetch(`/api/todos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, completed: !task.completed }),
+      body: JSON.stringify({ completed: !task.completed }),
     });
-    if (response.ok) {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === id ? { ...task, completed: !task.completed } : task
-        )
-      );
-    }
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, completed: !task.completed } : task
+      )
+    );
+    setRefresh(true);
   };
 
-  const modifyTask = async (id: number, newTask: string) => {
-    const response = await fetch("/api/todos", {
+  const modifyTask = async (
+    id: number,
+    updatedTask: {
+      title: string;
+      description: string;
+      category: string;
+      completed: boolean;
+    }
+  ) => {
+    await fetch(`/api/todos/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, title: newTask }),
+      body: JSON.stringify(updatedTask),
     });
-    if (response.ok) {
-      setTasks((prev) =>
-        prev.map((task) =>
-          task.id === id ? { ...task, task: newTask } : task
-        )
-      );
-    }
+    setTasks((prev) =>
+      prev.map((task) => (task.id === id ? { ...task, ...updatedTask } : task))
+    );
+    setRefresh(true);
   };
 
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Work":
-        return "bg-[#2843ad]"; //blue color
-      case "Personal":
-        return "bg-[#03a4a1]"; //green color
-      case "Urgent":
-        return "bg-[#bc2e46]"; //red color
-      default:
-        return "bg-gray-500";
-    }
+    const categoryColors: Record<string, string> = {
+      Work: "bg-[#2843ad]",
+      Personal: "bg-[#03a4a1]",
+      Activities: "bg-[#bc2e46]",
+      Sport: "bg-[#d38416]",
+    };
+    return categoryColors[category] || "bg-gray-400";
   };
 
   const handleDragStart = (id: number) => {
@@ -121,7 +112,7 @@ const TodoList: React.FC = () => {
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
   };
 
   const handleDrop = (e: React.DragEvent, targetId: number) => {
@@ -132,9 +123,10 @@ const TodoList: React.FC = () => {
     if (!draggedTask) return;
 
     const remainingTasks = tasks.filter((task) => task.id !== draggedTaskId);
-    
-    const targetIndex = remainingTasks.findIndex((task) => task.id === targetId);
-    
+    const targetIndex = remainingTasks.findIndex(
+      (task) => task.id === targetId
+    );
+
     const updatedTasks = [
       ...remainingTasks.slice(0, targetIndex),
       draggedTask,
@@ -142,88 +134,125 @@ const TodoList: React.FC = () => {
     ];
 
     setTasks(updatedTasks);
-    setDraggedTaskId(null); 
+    setDraggedTaskId(null);
   };
 
   return (
-    <div className="relative space-y-3 mt-5 min-h-10">
-      {tasks.length === 0 ? (
-        <Card>
-          <CardContent className="text-center">
-            <CardHeader>
-              <CardTitle className="text-[#39334d]">No Task</CardTitle>
-            </CardHeader>
-            <CardDescription>Add a task to get started</CardDescription>
-          </CardContent>
-        </Card>
-      ) : (
-        tasks.map((task) => (
-          <div key={task.id} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, task.id)}>
-            <DropIndicator beforeId={task.id} />
+    <TooltipProvider>
+      <div className="relative space-y-3 mt-5 min-h-10">
+        {tasks.length === 0 ? (
+          <Card>
+            <CardContent className="text-center">
+              <CardHeader>
+                <CardTitle className="text-[#39334d]">No Task</CardTitle>
+              </CardHeader>
+              <CardDescription>Add a task to get started</CardDescription>
+            </CardContent>
+          </Card>
+        ) : (
+          tasks.map((task) => (
             <div
-              draggable="true"
-              onDragStart={() => handleDragStart(task.id)}
+              key={task.id}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, task.id)}
             >
-              <Card className="flex p-3 items-center justify-between">
-                <div className="flex items-center">
-                  <div
-                    className={`h-4 w-4 rounded-full ${getCategoryColor(
-                      task.category
-                    )} mr-2`}
-                  ></div>
-                  <CardHeader className="flex-grow">
-                    <CardTitle className="text-[#39334d] text-md">
-                      <span className={task.completed ? "line-through" : ""}>
-                        {task.task}
-                      </span>
-                    </CardTitle>
-                  </CardHeader>
-                </div>
-                <div className="flex space-x-2">
-                  <div
-                    onClick={() => toggleCompletion(task.id)}
-                    className="cursor-pointer"
-                  >
-                    {task.completed ? (
-                      <FontAwesomeIcon
-                        icon={faCheckCircle}
-                        className="text-[#03a4a1]"
-                      />
-                    ) : (
-                      <FontAwesomeIcon
-                        icon={faCircleXmark}
-                        className="hover:text-[#6e54b5] text-[#9638d1]"
-                      />
-                    )}
+              <div
+                draggable="true"
+                onDragStart={() => handleDragStart(task.id)}
+              >
+                <Card className="flex p-3 items-center justify-between">
+                  <div className="flex items-center">
+                    <div
+                      className={`h-4 w-4 rounded-full ${getCategoryColor(
+                        task.category
+                      )} mr-2`}
+                    ></div>
+                    <CardHeader className="flex-grow">
+                      <CardTitle className="text-[#39334d] text-md">
+                        <span className={task.completed ? "line-through" : ""}>
+                          {task.title}
+                        </span>
+                      </CardTitle>
+                    </CardHeader>
                   </div>
-                  <div
-                    onClick={() => {
-                      const newTask = prompt("Modify your task:", task.task);
-                      if (newTask) modifyTask(task.id, newTask);
-                    }}
-                    className="cursor-pointer"
-                  >
-                    <FontAwesomeIcon
-                      icon={faEdit}
-                      className="hover:text-[#6e54b5] text-[#2843ad]"
-                    />
+                  <div className="flex space-x-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          onClick={() => toggleCompletion(task.id)}
+                          className="cursor-pointer"
+                        >
+                          <FontAwesomeIcon
+                            icon={
+                              task.completed ? faCheckCircle : faCircleXmark
+                            }
+                            className={
+                              task.completed
+                                ? "text-[#03a4a1]"
+                                : "hover:text-[#6e54b5] text-[#9638d1]"
+                            }
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          {task.completed
+                            ? "Mark as complete"
+                            : "Mark as incomplete"}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          onClick={() => {
+                            setCurrentTask(task);
+                            setModifyDialogOpen(true);
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <FontAwesomeIcon
+                            icon={faEdit}
+                            className="hover:text-[#6e54b5] text-[#2843ad]"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edit task</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          onClick={() => deleteTask(task.id)}
+                          className="cursor-pointer"
+                        >
+                          <FontAwesomeIcon
+                            icon={faTrash}
+                            className="hover:text-[#6e54b5] text-[#bc2e46]"
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Delete task</p>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
-                  <div
-                    onClick={() => deleteTask(task.id)}
-                    className="cursor-pointer"
-                  >
-                    <FontAwesomeIcon
-                      icon={faTrash}
-                      className="hover:text-[#6e54b5] text-[#bc2e46]"
-                    />
-                  </div>
-                </div>
-              </Card>
+                </Card>
+              </div>
             </div>
-          </div>
-        ))
-      )}
-    </div>
+          ))
+        )}
+        {currentTask && (
+          <ModifyTask
+            isOpen={isModifyDialogOpen}
+            setIsOpen={setModifyDialogOpen}
+            task={currentTask}
+            modifyTask={modifyTask}
+          />
+        )}
+      </div>
+    </TooltipProvider>
   );
 };
 

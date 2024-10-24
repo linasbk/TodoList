@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TODO List App
 
-## Getting Started
+A simple yet powerful Drog and Drop TODO List application built with React and Next.js. This app allows users to manage their tasks efficiently by providing features like drag-and-drop prioritization, marking tasks as complete, and performing CRUD operations.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Create Tasks**: Easily add new tasks with a title, description, and category.
+- **Read Tasks**: View all your tasks in a clean, organized layout.
+- **Update Tasks**: Modify existing tasks to keep them up to date.
+- **Delete Tasks**: Remove tasks that are no longer needed.
+- **Drag-and-Drop**: Rearrange tasks based on priority by dragging and dropping them.
+- **Mark as Complete**: Quickly mark tasks as completed with a single click.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Technologies Used
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **React**: For building the user interface.
+- **Next.js**: For server-side rendering and routing.
+- **Prisma**: For database management.
+- **NextAuth**: For user authentication.
+- **Axios**: For making HTTP requests.
+- **TypeScript**: For type safety and better development experience.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Installation
 
-## Learn More
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/todo-list-app.git
+   cd todo-list-app
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. Create a `.env` file in the root directory and add the following environment variables:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   DATABASE_URL=postgresql://postgres:password@localhost:5432/nextjs_db
+   NEXTAUTH_SECRET=secret
+   ```
+3. Run the development server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to access the application.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

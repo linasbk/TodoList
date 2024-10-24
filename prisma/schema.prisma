@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -33,6 +30,7 @@ model Task {
   title       String
   description String?
   completed   Boolean  @default(false)
+  category    TaskCategory
   userId      Int
   user        User     @relation(fields: [userId], references: [id])
   createdAt   DateTime @default(now())
@@ -62,4 +60,12 @@ model VerificationToken {
   expires     DateTime
 
   @@unique([identifier, token])
+}
+
+// Enum for task categories
+enum TaskCategory {
+  Sport
+  Work
+  Personal
+  Activities
 }

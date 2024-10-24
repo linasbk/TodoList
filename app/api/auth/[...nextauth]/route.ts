@@ -1,12 +1,10 @@
-// src/app/api/auth/[...nextauth]/route.ts
-import NextAuth from "next-auth/next";
+import NextAuth, { SessionStrategy } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { PrismaClient } from "@prisma/client";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
-import GitHubProvider from "next-auth/providers/github";
 import bcrypt from "bcryptjs";
-import { RequestInternal, User } from "next-auth";
+import { Session } from "next-auth";
+import { JWT } from "next-auth/jwt";
 
 const prisma = new PrismaClient();
 
@@ -19,7 +17,7 @@ export const authOptions = {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials: Record<"email" | "password", string> | undefined, req: Pick<RequestInternal, "query" | "body" | "headers" | "method">): Promise<User | null> {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -41,34 +39,30 @@ export const authOptions = {
         return null;
       }
     }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID!,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    }),
   ],
   callbacks: {
-    async session({ session, token }: { session: any, token: any }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (token?.id) {
         session.user.id = token.id;
       }
       return session;
     },
-    async jwt({ token, user }: { token: any, user: any }) {
+    async jwt({ token, user }: { token: JWT; user?: any }) {
       if (user) {
         token.id = user.id;
       }
       return token;
     },
   },
-  pages: {
-    signIn: "/signin", 
-    error: "/error", 
+  session: {
+    strategy: "jwt" as SessionStrategy,
   },
   secret: process.env.NEXTAUTH_SECRET,
+  debug: true,
+  pages: {
+    signIn: "/signin",
+    error: "/error",
+  },
 };
 
 const handler = NextAuth(authOptions);
