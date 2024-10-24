@@ -1,9 +1,1 @@
-{
-  "/page": "app/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/(Auth)/signIn/page": "app/(Auth)/signIn/page.js",
-  "/api/todos/route": "app/api/todos/route.js",
-  "/(Auth)/signUp/page": "app/(Auth)/signUp/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/auth/route": "app/api/auth/route.js"
-}
+{}
