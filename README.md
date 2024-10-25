@@ -32,7 +32,7 @@ A simple yet powerful Drog and Drop TODO List application built with React and N
 2. Create a `.env` file in the root directory and add the following environment variables:
 
    ```bash
-   DATABASE_URL=postgresql://postgres:password@localhost:5432/nextjs_db
+   DATABASE_URL=postgresql://postgres:password@db:5432/nextjs_db
    NEXTAUTH_SECRET=secret
    ```
 3. Run the development server:
